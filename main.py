@@ -22,10 +22,28 @@ def loadMaps():
    with open('iam_definition.json') as f:
        iamDef = json.loads(f.read())
 
+def getDependantActions(actions):
+   result = actions.copy()
+   for base_action in actions:
+       split_base = base_action.split(':')
+       if len(split_base) != 2:
+           continue
+       base_service = split_base[0]
+       base_method = split_base[1]
+
+       for service in iamDef:
+           if service['prefix'].lower() == base_service.lower():
+               for priv in service['privileges']:
+                   if priv['privileges'].lower() == base_method.lower():
+                       for resource_type in priv['resource_type']:
+                           for dependent_action in resource_type['dependent_actions']:
+                               result.append(dependent_action)
+   return result
+        
 
 def main():
     loadMaps()
-
+    print(getDependantActions(['S3:PutObject']))
     log_file = open('csm.log', 'w')
 
     sock = socket.socket(socket.AF_INET, # Internet
